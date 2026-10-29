@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#071114"><title>CineVerse — Tu universo de entretenimiento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="app-shell">
+<aside class="sidebar">
+  <a class="brand" href="#" data-view="home"><span class="brand-mark">CV</span><span>Cine<span>Verse</span></span></a>
+  <div class="nav-label">MENÚ</div>
+  <button class="nav-item active" data-view="home"><span>⌂</span> Inicio</button>
+  <button class="nav-item" data-view="movies"><span>▣</span> Películas</button>
+  <button class="nav-item" data-view="series"><span>▤</span> Series</button>
+  <button class="nav-item" data-view="anime"><span>✿</span> Anime</button>
+  <button class="nav-item" data-view="trending"><span>↗</span> Tendencias</button>
+  <button class="nav-item" data-view="upcoming"><span>◷</span> Próximos estrenos</button>
+  <div class="nav-label space-label">TU BIBLIOTECA</div>
+  <button class="nav-item" data-view="favorites"><span>♡</span> Mis favoritos <span class="count" id="favCount">0</span></button>
+  <button class="nav-item" data-view="trailers"><span>▷</span> Tráileres</button>
+  <div class="sidebar-bottom"><div class="api-pill"><span class="pulse"></span><span id="apiStatus">Conectando APIs…</span></div><small>Tu universo de entretenimiento</small></div>
+</aside>
+<main class="main">
+<header class="topbar">
+  <button class="mobile-menu" id="mobileMenu" aria-label="Abrir menú">☰</button>
+  <div class="type-select"><select id="globalType" aria-label="Tipo de contenido"><option value="all">Todo</option><option value="movie">Películas</option><option value="tv">Series</option><option value="anime">Anime</option></select></div>
+  <form class="searchbar" id="searchForm"><span>⌕</span><input id="searchInput" placeholder="Busca películas, series, anime..." autocomplete="off"><button aria-label="Buscar">Buscar</button></form>
+  <button class="icon-btn" id="imagesBtn" title="Buscar fondos visuales">▧</button>
+  <button class="profile" id="profileBtn"><span class="avatar">CV</span><span><b>Invitado</b><small>Explorador</small></span><span>⌄</span></button>
+</header>
+<section id="notice" class="notice hidden"></section>
+<section id="hero" class="hero">
+  <div class="hero-backdrop"></div><div class="hero-content"><div class="eyebrow"><span class="live-dot"></span> TU PRÓXIMO FAVORITO TE ESPERA</div>
+  <h1>Historias que<br><em>te hacen sentir.</em></h1><p>Explora películas, series y anime en un solo lugar.</p>
+  <div class="hero-actions"><button class="primary-btn" id="heroExplore">✦ Explorar catálogo</button><button class="ghost-btn" id="heroTrailer">▷ Buscar tráileres</button></div>
+  <div class="hero-meta"><span>PELÍCULAS</span><i></i><span>SERIES</span><i></i><span>ANIME</span></div></div>
+  <div class="hero-index"><span>01</span><div></div><span>UNIVERSO CINEMATOGRÁFICO</span></div>
+</section>
+<section class="content-area">
+  <div class="section-heading"><div><div class="eyebrow muted" id="sectionEyebrow">SELECCIÓN PARA TI</div><h2 id="sectionTitle">Descubre tu próximo favorito</h2></div><div class="heading-actions"><button class="text-btn" id="refreshBtn">↻ Actualizar</button><select id="sortSelect" aria-label="Ordenar"><option value="popular">Populares</option><option value="top_rated">Mejor puntuados</option><option value="upcoming">Próximos</option></select></div></div>
+  <div class="chips" id="chips"><button class="chip active" data-category="trending">En tendencia</button><button class="chip" data-category="popular">Populares</button><button class="chip" data-category="top_rated">Mejor puntuados</button><button class="chip" data-category="upcoming">Próximos estrenos</button></div>
+  <div id="results" class="movie-grid"><div class="loading"><span class="spinner"></span><p>Cargando tu universo…</p></div></div>
+  <div class="load-row"><button class="ghost-btn hidden" id="loadMore">Cargar más</button></div>
+</section>
+<footer><span class="brand-mini">CineVerse</span><span>Explora historias. Descubre universos.</span><button id="aboutBtn">Acerca del proyecto</button></footer>
+</main>
+</div>
+<div class="modal hidden" id="detailModal" role="dialog" aria-modal="true"><div class="modal-backdrop" data-close="detailModal"></div><article class="detail-panel"><button class="close-btn" data-close="detailModal" aria-label="Cerrar">✕</button><div id="detailBody"></div></article></div>
+<div class="modal hidden" id="trailerModal" role="dialog" aria-modal="true"><div class="modal-backdrop" data-close="trailerModal"></div><article class="trailer-panel"><button class="close-btn" data-close="trailerModal">✕</button><h2>Tráileres y avances</h2><p class="muted-text">Resultados de YouTube relacionados con tu búsqueda.</p><form id="trailerForm" class="searchbar modal-search"><input id="trailerInput" placeholder="Ej. Dune Part Two trailer" required><button>Buscar</button></form><div id="trailerResults" class="trailer-grid"></div></article></div>
+<div class="modal hidden" id="imagesModal" role="dialog" aria-modal="true"><div class="modal-backdrop" data-close="imagesModal"></div><article class="trailer-panel"><button class="close-btn" data-close="imagesModal">✕</button><h2>Fondos visuales</h2><form id="imagesForm" class="searchbar modal-search"><input id="imagesInput" value="cinema movie theater" placeholder="Buscar fotografías" required><button>Buscar</button></form><div id="imagesResults" class="image-grid"></div></article></div>
+<div class="toast" id="toast"></div>
+<script src="/app.js"></script>
+</body></html>
