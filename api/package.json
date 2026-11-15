@@ -1,0 +1,14 @@
+
+{
+  "name": "cineverse-functions",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/functions.js",
+  "engines": {
+    "node": ">=22 <25"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.7.0"
+  }
+}
