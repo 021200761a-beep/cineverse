@@ -123,6 +123,7 @@ app.http("discover", {
 });
 
 
+
 app.http('db-status', {
   methods: ['GET'],
   authLevel: 'anonymous',
@@ -137,18 +138,33 @@ app.http('db-status', {
         jsonBody: {
           success: true,
           database: result.database_name,
-          connected: result.connected === 1
+          connected: true
         }
       };
-
     } catch (error) {
       context.error('Error de conexión a TiDB:', error);
+
+      const allowedCodes = [
+        'ETIMEDOUT',
+        'ECONNREFUSED',
+        'ENOTFOUND',
+        'ER_ACCESS_DENIED_ERROR',
+        'HANDSHAKE_SSL_ERROR',
+        'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+        'SELF_SIGNED_CERT_IN_CHAIN',
+        'CERT_HAS_EXPIRED'
+      ];
+
+      const code = allowedCodes.includes(error.code)
+        ? error.code
+        : 'UNKNOWN_ERROR';
 
       return {
         status: 503,
         jsonBody: {
           success: false,
-          message: 'No se pudo conectar a la base de datos'
+          errorCode: code,
+          message: 'No se pudo conectar a TiDB'
         }
       };
     }
