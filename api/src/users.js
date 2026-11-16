@@ -5,7 +5,8 @@ import {
   makePassword,
   passwordMatches,
   sessionCookie,
-  readSession
+  readSession,
+  clearSessionCookie
 } from "./lib/auth.js";
 
 app.http("user-register", {
@@ -431,5 +432,41 @@ app.http("user-me", {
         }
       };
     }
+  }
+});
+
+// ============================================
+// CERRAR SESIÓN
+// POST /api/user/logout
+// ============================================
+
+app.http("user-logout", {
+  methods: ["POST"],
+  authLevel: "anonymous",
+  route: "user/logout",
+
+  handler: async (request) => {
+    const allowedOrigin =
+      "https://red-bay-039d2c61e.3.azurestaticapps.net";
+
+    if (request.headers.get("origin") !== allowedOrigin) {
+      return {
+        status: 403,
+        jsonBody: {
+          error: "Origen no autorizado."
+        }
+      };
+    }
+
+    return {
+      status: 200,
+      headers: {
+        "Set-Cookie": clearSessionCookie(),
+        "Cache-Control": "no-store"
+      },
+      jsonBody: {
+        ok: true
+      }
+    };
   }
 });
