@@ -12,7 +12,38 @@ function requireLogin(action){if(state.user){action?.();return true}state.pendin
 function updateProfile(){$("#profileName").textContent=state.user?.name||"Ingresar";$("#profileStatus").textContent=state.user?.email||"Cuenta CineVerse";}
 function showAuth(mode="login"){$("#loginForm").reset();$("#registerForm").reset();$("#loginError").classList.add("hidden");$("#registerError").classList.add("hidden");$("#authModal").classList.remove("hidden");document.body.style.overflow="hidden";setAuthMode(mode);}
 function setAuthMode(mode){const login=mode==="login";$("#loginForm").classList.toggle("hidden",!login);$("#registerForm").classList.toggle("hidden",login);$("#showLogin").classList.toggle("active",login);$("#showRegister").classList.toggle("active",!login);$("#authTitle").textContent=login?"Ingresa a CineVerse":"Crea tu cuenta CineVerse";$("#authDescription").textContent=login?"Accede con tu correo electrónico y contraseña.":"Regístrate gratis para guardar favoritos y disfrutar todas las funciones.";$("#loginError").classList.add("hidden");$("#registerError").classList.add("hidden")}
-async function loadUser(){try{const d=await api("/api/user/me");state.user=d.user;if(state.user){const f=await api("/api/user/favorites");state.favorites=f.favorites||[];}updateProfile();updateFavCount()}catch{state.user=null;updateProfile()}}
+
+async function loadUser() {
+  // Verificar la sesión de forma independiente.
+  try {
+    const data = await api("/api/user/me");
+    state.user = data.user || null;
+  } catch (error) {
+    console.error("Error verificando sesión:", error);
+    // No declarar al usuario desconectado por un fallo de red.
+    updateProfile();
+    updateFavCount();
+    return;
+  }
+
+  // Cargar favoritos sin afectar la autenticación.
+  if (state.user) {
+    try {
+      const data = await api("/api/user/favorites");
+      state.favorites = data.favorites || [];
+    } catch (error) {
+      console.warn("No se pudieron cargar favoritos:", error);
+      state.favorites = [];
+    }
+  } else {
+    state.favorites = [];
+  }
+
+  updateProfile();
+  updateFavCount();
+}
+
+
 async function saveFavorite(item){const payload={source:item.source,sourceId:item.sourceId,type:item.type,title:item.title};if(isFav(item)){await fetch(`/api/user/favorites/${encodeURIComponent(item.source)}/${encodeURIComponent(item.type)}/${encodeURIComponent(item.sourceId)}`,{method:"DELETE"});state.favorites=state.favorites.filter(x=>x.id!==item.id)}else{const r=await fetch("/api/user/favorites",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});const d=await r.json();if(!r.ok)throw new Error(d.error||"No se pudo guardar el favorito");state.favorites.push(item)}updateFavCount();renderCards(state.view==="favorites"?state.favorites:state.results);toast(isFav(item)?"Añadido a favoritos":"Eliminado de favoritos")}
 
 function isFav(item){return state.favorites.some(x=>x.id===item.id)}
