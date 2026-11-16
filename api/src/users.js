@@ -4,7 +4,8 @@ import { getDatabase } from "./lib/database.js";
 import {
   makePassword,
   passwordMatches,
-  sessionCookie
+  sessionCookie,
+  readSession
 } from "./lib/auth.js";
 
 app.http("user-register", {
@@ -342,6 +343,91 @@ app.http("user-login", {
         status: 503,
         jsonBody: {
           error: "No se pudo iniciar sesión."
+        }
+      };
+    }
+  }
+});
+
+// ============================================
+// OBTENER USUARIO CON SESIÓN ACTIVA
+// GET /api/user/me
+// ============================================
+
+app.http("user-me", {
+  methods: ["GET"],
+  authLevel: "anonymous",
+  route: "user/me",
+
+  handler: async (request, context) => {
+    try {
+      // Leer y verificar la cookie de sesión.
+      const userId = readSession(request);
+
+      // Sin sesión o con cookie inválida.
+      if (!userId) {
+        return {
+          status: 200,
+          headers: {
+            "Cache-Control": "no-store"
+          },
+          jsonBody: {
+            user: null
+          }
+        };
+      }
+
+      // Consultar el usuario en TiDB Cloud.
+      const db = getDatabase();
+
+      const [rows] = await db.execute(
+        `SELECT user_id, display_name, email, is_blocked
+         FROM user_accounts
+         WHERE user_id = ?
+         LIMIT 1`,
+        [userId]
+      );
+
+      const account = rows[0];
+
+      // Usuario inexistente o bloqueado.
+      if (!account || Number(account.is_blocked) === 1) {
+        return {
+          status: 200,
+          headers: {
+            "Cache-Control": "no-store"
+          },
+          jsonBody: {
+            user: null
+          }
+        };
+      }
+
+      // Respuesta compatible con el frontend.
+      return {
+        status: 200,
+        headers: {
+          "Cache-Control": "no-store"
+        },
+        jsonBody: {
+          user: {
+            id: Number(account.user_id),
+            name: account.display_name,
+            email: account.email
+          }
+        }
+      };
+
+    } catch (error) {
+      context.error("Error verificando sesión:", error);
+
+      return {
+        status: 503,
+        headers: {
+          "Cache-Control": "no-store"
+        },
+        jsonBody: {
+          error: "No se pudo verificar la sesión."
         }
       };
     }
