@@ -5,6 +5,8 @@ import { testDatabaseConnection } from './lib/database.js';
 
 import "./users.js";
 
+import "./trailers.js";
+
 app.http("status", {
   methods: ["GET"],
   authLevel: "anonymous",
