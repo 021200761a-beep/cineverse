@@ -1,6 +1,8 @@
 
 import { app } from "@azure/functions";
 
+import { testDatabaseConnection } from './lib/database.js';
+
 app.http("status", {
   methods: ["GET"],
   authLevel: "anonymous",
@@ -114,6 +116,39 @@ app.http("discover", {
         status: 502,
         jsonBody: {
           error: "No se pudo conectar con TMDB"
+        }
+      };
+    }
+  }
+});
+
+
+app.http('db-status', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'db-status',
+
+  handler: async (request, context) => {
+    try {
+      const result = await testDatabaseConnection();
+
+      return {
+        status: 200,
+        jsonBody: {
+          success: true,
+          database: result.database_name,
+          connected: result.connected === 1
+        }
+      };
+
+    } catch (error) {
+      context.error('Error de conexión a TiDB:', error);
+
+      return {
+        status: 503,
+        jsonBody: {
+          success: false,
+          message: 'No se pudo conectar a la base de datos'
         }
       };
     }
