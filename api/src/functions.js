@@ -7,6 +7,8 @@ import "./users.js";
 
 import "./trailers.js";
 
+import "./admin.js";
+
 app.http("status", {
   methods: ["GET"],
   authLevel: "anonymous",
