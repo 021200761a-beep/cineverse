@@ -3,6 +3,8 @@ import { app } from "@azure/functions";
 
 import { testDatabaseConnection } from './lib/database.js';
 
+import "./users.js";
+
 app.http("status", {
   methods: ["GET"],
   authLevel: "anonymous",
