@@ -21,15 +21,18 @@ app.http("user-register", {
       }
 
       // Comprobar el origen de las solicitudes del navegador.
+      // Permitir registros únicamente desde el sitio oficial.
       const origin = request.headers.get("origin");
-      const expectedOrigin = new URL(request.url).origin;
+      const allowedOrigin = "https://red-bay-039d2c61e.3.azurestaticapps.net";
 
-      if (origin && origin !== expectedOrigin) {
+        if (origin !== allowedOrigin) {
         return {
-          status: 403,
-          jsonBody: { error: "Origen no autorizado." }
+            status: 403,
+            jsonBody: {
+            error: "Origen no autorizado."
+            }
         };
-      }
+        }
 
       const contentLength = Number(
          request.headers.get("content-length") || 0
@@ -137,11 +140,24 @@ app.http("user-register", {
         [name, email, salt, hash]
       );
 
+      const userId = Number(result.insertId);
+
+            if (!Number.isSafeInteger(userId) || userId <= 0) {
+            context.error("TiDB devolvió un ID de usuario inválido.");
+
+            return {
+                status: 503,
+                jsonBody: {
+                error: "No se pudo completar el registro."
+                }
+            };
+         }
+
       const user = {
-        id: result.insertId,
-        name,
-        email
-      };
+            id: userId,
+            name,
+            email
+        };
 
       return {
         status: 201,
