@@ -1,7 +1,11 @@
 
 import { app } from "@azure/functions";
 import { getDatabase } from "./lib/database.js";
-import { makePassword, sessionCookie } from "./lib/auth.js";
+import {
+  makePassword,
+  passwordMatches,
+  sessionCookie
+} from "./lib/auth.js";
 
 app.http("user-register", {
   methods: ["POST"],
@@ -185,6 +189,159 @@ app.http("user-register", {
         status: 503,
         jsonBody: {
           error: "No se pudo crear la cuenta. Inténtalo nuevamente."
+        }
+      };
+    }
+  }
+});
+
+
+// ============================================
+// INICIO DE SESIÓN DE USUARIOS
+// POST /api/user/login
+// ============================================
+
+app.http("user-login", {
+  methods: ["POST"],
+  authLevel: "anonymous",
+  route: "user/login",
+
+  handler: async (request, context) => {
+    try {
+      const allowedOrigin =
+        "https://red-bay-039d2c61e.3.azurestaticapps.net";
+
+      if (request.headers.get("origin") !== allowedOrigin) {
+        return {
+          status: 403,
+          jsonBody: { error: "Origen no autorizado." }
+        };
+      }
+
+      const contentType = request.headers.get("content-type") || "";
+
+      if (!/^application\/json(?:\s*;|$)/i.test(contentType)) {
+        return {
+          status: 415,
+          jsonBody: { error: "Se requiere JSON." }
+        };
+      }
+
+      const rawBody = await request.text();
+
+      if (Buffer.byteLength(rawBody, "utf8") > 8192) {
+        return {
+          status: 413,
+          jsonBody: { error: "Solicitud demasiado grande." }
+        };
+      }
+
+      let body;
+
+      try {
+        body = JSON.parse(rawBody);
+      } catch {
+        return {
+          status: 400,
+          jsonBody: { error: "JSON inválido." }
+        };
+      }
+
+      if (
+        !body ||
+        typeof body !== "object" ||
+        Array.isArray(body) ||
+        typeof body.email !== "string" ||
+        typeof body.password !== "string"
+      ) {
+        return {
+          status: 400,
+          jsonBody: { error: "Correo y contraseña obligatorios." }
+        };
+      }
+
+      const email = body.email.trim().toLowerCase();
+      const password = body.password;
+
+      if (
+        !email ||
+        email.length > 254 ||
+        !password ||
+        password.length > 1024
+      ) {
+        return {
+          status: 400,
+          jsonBody: { error: "Datos de acceso inválidos." }
+        };
+      }
+
+      const db = getDatabase();
+
+      const [rows] = await db.execute(
+        `SELECT user_id, display_name, email,
+                password_salt, password_hash, is_blocked
+         FROM user_accounts
+         WHERE email = ?
+         LIMIT 1`,
+        [email]
+      );
+
+      const account = rows[0];
+
+      if (
+        !account ||
+        !passwordMatches(
+          password,
+          account.password_salt,
+          account.password_hash
+        )
+      ) {
+        return {
+          status: 401,
+          jsonBody: {
+            error: "Correo o contraseña incorrectos."
+          }
+        };
+      }
+
+      if (Number(account.is_blocked) === 1) {
+        return {
+          status: 403,
+          jsonBody: { error: "Cuenta bloqueada." }
+        };
+      }
+
+      const userId = Number(account.user_id);
+
+      if (!Number.isSafeInteger(userId) || userId <= 0) {
+        throw new Error("ID de usuario inválido.");
+      }
+
+      const user = {
+        id: userId,
+        name: account.display_name,
+        email: account.email
+      };
+
+      return {
+        status: 200,
+        headers: {
+          "Set-Cookie": sessionCookie(user.id),
+          "Cache-Control": "no-store"
+        },
+        jsonBody: {
+          ok: true,
+          user
+        }
+      };
+
+    } catch (error) {
+      context.error("Error iniciando sesión:", error);
+
+      return {
+        status: 503,
+        jsonBody: {
+          error: "No se pudo iniciar sesión."
         }
       };
     }
